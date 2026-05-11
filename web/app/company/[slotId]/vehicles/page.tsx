@@ -14,7 +14,7 @@ const ALL_CATEGORIES = "All"
 export default function VehiclesPage() {
   const { slotId } = useParams<{ slotId: string }>()
   const router = useRouter()
-  const { token } = useAuth()
+  const { token, loading: authLoading } = useAuth()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [category, setCategory] = useState<string>(ALL_CATEGORIES)
   const [sortBy, setSortBy] = useState<"name" | "damage" | "price" | "hours">("damage")
@@ -22,12 +22,13 @@ export default function VehiclesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
     if (!token) { window.location.href = "/login"; return }
     getVehicles(token, slotId)
       .then(setVehicles)
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false))
-  }, [slotId, token, router])
+  }, [slotId, token, authLoading, router])
 
   const categories = [ALL_CATEGORIES, ...Array.from(new Set(vehicles.map((v) => v.category))).sort()]
   const filtered = vehicles

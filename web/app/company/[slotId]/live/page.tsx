@@ -46,18 +46,19 @@ function Bar({ value, color }: { value: number; color: string }) {
 export default function LivePage() {
   const { slotId } = useParams<{ slotId: string }>()
   const router = useRouter()
-  const { token } = useAuth()
+  const { token, loading: authLoading } = useAuth()
   const [data, setData] = useState<LiveData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
     if (!token) { window.location.href = "/login"; return }
-    getLiveData(token!, slotId)
+    getLiveData(token, slotId)
       .then(setData)
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false))
-  }, [token, slotId, router])
+  }, [token, authLoading, slotId, router])
 
   if (loading) return <div className="max-w-6xl mx-auto space-y-6"><div className="h-8 w-48 bg-secondary rounded animate-pulse" /></div>
   if (error) return <p className="text-destructive">{error}</p>

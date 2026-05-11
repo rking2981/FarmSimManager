@@ -16,18 +16,19 @@ import CompanyNav from "@/components/CompanyNav"
 export default function CompanyFinancesPage() {
   const { slotId } = useParams<{ slotId: string }>()
   const router = useRouter()
-  const { token } = useAuth()
+  const { token, loading: authLoading } = useAuth()
   const [data, setData] = useState<FinancesResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
     if (!token) { window.location.href = "/login"; return }
     getFinances(token, slotId)
       .then(setData)
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false))
-  }, [slotId, token, router])
+  }, [slotId, token, authLoading, router])
 
   if (loading) return <LoadingState />
   if (error) return <p className="text-destructive">{error}</p>

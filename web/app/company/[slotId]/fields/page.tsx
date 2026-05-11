@@ -15,19 +15,20 @@ import FieldTable from "@/components/fields/FieldTable"
 export default function FieldsPage() {
   const { slotId } = useParams<{ slotId: string }>()
   const router = useRouter()
-  const { token } = useAuth()
+  const { token, loading: authLoading } = useAuth()
   const [fields, setFields] = useState<Field[]>([])
   const [filter, setFilter] = useState<"all" | "owned">("owned")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
     if (!token) { window.location.href = "/login"; return }
     getFields(token, slotId)
       .then(setFields)
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false))
-  }, [slotId, token, router])
+  }, [slotId, token, authLoading, router])
 
   const displayed = filter === "owned" ? fields.filter((f) => f.owned) : fields
   const owned = fields.filter((f) => f.owned)

@@ -301,7 +301,7 @@ func (h *CompaniesHandler) Live(w http.ResponseWriter, r *http.Request) {
 	}
 
 	row := h.db.QueryRow(r.Context(), `
-		SELECT exported_at, game_time, farms, crop_prices, contracts, animals, workers, pushed_at
+		SELECT exported_at::text, game_time, farms, crop_prices, contracts, animals, workers, pushed_at::text
 		FROM mod_snapshots
 		WHERE company_id = $1
 		ORDER BY pushed_at DESC LIMIT 1`, companyID)
