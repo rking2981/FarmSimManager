@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-
-import { fetchFinances } from "@/lib/companion"
+import { useAuth } from "@/lib/auth-context"
+import { getFinances } from "@/lib/api"
 import type { FinancesResponse } from "@/types/finances"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,21 +16,18 @@ import CompanyNav from "@/components/CompanyNav"
 export default function CompanyFinancesPage() {
   const { slotId } = useParams<{ slotId: string }>()
   const router = useRouter()
+  const { token } = useAuth()
   const [data, setData] = useState<FinancesResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("companion_token") ?? ""
-    if (!token) {
-      router.push("/")
-      return
-    }
-    fetchFinances(token, slotId)
+    if (!token) { router.push("/login"); return }
+    getFinances(token, slotId)
       .then(setData)
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false))
-  }, [slotId, router])
+  }, [slotId, token, router])
 
   if (loading) return <LoadingState />
   if (error) return <p className="text-destructive">{error}</p>
@@ -47,40 +44,19 @@ export default function CompanyFinancesPage() {
         <h2 className="text-xl font-semibold">Financial Dashboard</h2>
         <Badge variant="secondary">{data.days.length} days recorded</Badge>
       </div>
-
-      <StatCards
-        totalIncome={totalIncome}
-        totalExpense={totalExpense}
-        netProfit={netProfit}
-        stats={data.stats}
-      />
-
+      <StatCards totalIncome={totalIncome} totalExpense={totalExpense} netProfit={netProfit} stats={data.stats} />
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Income vs Expenses — By Day</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FinancialChart days={data.days} />
-        </CardContent>
+        <CardHeader><CardTitle className="text-base">Income vs Expenses — By Day</CardTitle></CardHeader>
+        <CardContent><FinancialChart days={data.days} /></CardContent>
       </Card>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Income Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <IncomeBreakdown days={data.days} />
-          </CardContent>
+          <CardHeader><CardTitle className="text-base">Income Breakdown</CardTitle></CardHeader>
+          <CardContent><IncomeBreakdown days={data.days} /></CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Expense Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ExpenseBreakdown days={data.days} />
-          </CardContent>
+          <CardHeader><CardTitle className="text-base">Expense Breakdown</CardTitle></CardHeader>
+          <CardContent><ExpenseBreakdown days={data.days} /></CardContent>
         </Card>
       </div>
     </div>

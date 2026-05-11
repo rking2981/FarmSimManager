@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { getLiveData } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+
 import CompanyNav from "@/components/CompanyNav"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -52,7 +53,7 @@ export default function LivePage() {
 
   useEffect(() => {
     if (!token) { router.push("/login"); return }
-    getLiveData(token, slotId)
+    getLiveData(token!, slotId)
       .then(setData)
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false))

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { fetchFields } from "@/lib/companion"
+import { useAuth } from "@/lib/auth-context"
+import { getFields } from "@/lib/api"
 import type { Field } from "@/types/fields"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,19 +15,19 @@ import FieldTable from "@/components/fields/FieldTable"
 export default function FieldsPage() {
   const { slotId } = useParams<{ slotId: string }>()
   const router = useRouter()
+  const { token } = useAuth()
   const [fields, setFields] = useState<Field[]>([])
   const [filter, setFilter] = useState<"all" | "owned">("owned")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("companion_token") ?? ""
-    if (!token) { router.push("/"); return }
-    fetchFields(token, slotId)
+    if (!token) { router.push("/login"); return }
+    getFields(token, slotId)
       .then(setFields)
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false))
-  }, [slotId, router])
+  }, [slotId, token, router])
 
   const displayed = filter === "owned" ? fields.filter((f) => f.owned) : fields
   const owned = fields.filter((f) => f.owned)
@@ -37,7 +38,6 @@ export default function FieldsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <CompanyNav slotId={slotId} />
-
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold">Fields</h2>
@@ -59,25 +59,14 @@ export default function FieldsPage() {
           ))}
         </div>
       </div>
-
       <FieldSummary fields={displayed} />
-
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Field Status Grid</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FieldGrid fields={displayed} />
-        </CardContent>
+        <CardHeader><CardTitle className="text-base">Field Status Grid</CardTitle></CardHeader>
+        <CardContent><FieldGrid fields={displayed} /></CardContent>
       </Card>
-
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Field Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FieldTable fields={displayed} />
-        </CardContent>
+        <CardHeader><CardTitle className="text-base">Field Details</CardTitle></CardHeader>
+        <CardContent><FieldTable fields={displayed} /></CardContent>
       </Card>
     </div>
   )
