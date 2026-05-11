@@ -26,7 +26,6 @@ local function safeBool(v)
     return v == true and "true" or "false"
 end
 
--- Minimal JSON serialiser — avoids external dependencies
 local function jsonStr(s)  return '"' .. safeStr(s) .. '"' end
 local function jsonNum(n)  return tostring(safeNum(n)) end
 local function jsonBool(b) return safeBool(b) end
@@ -56,13 +55,13 @@ local function collectGameTime()
     end
 
     return jsonObj({
-        {"year",        jsonNum(env.currentYear or 0)},
-        {"month",       jsonNum(env.currentMonth or 0)},
-        {"day",         jsonNum(env.currentDay or 0)},
-        {"hour",        jsonNum(env.currentHour or 0)},
-        {"minute",      jsonNum(env.currentMinute or 0)},
-        {"season",      jsonStr(season)},
-        {"dayLength",   jsonNum(env.dayDuration or 0)},
+        {"year",      jsonNum(env.currentYear or 0)},
+        {"month",     jsonNum(env.currentMonth or 0)},
+        {"day",       jsonNum(env.currentDay or 0)},
+        {"hour",      jsonNum(env.currentHour or 0)},
+        {"minute",    jsonNum(env.currentMinute or 0)},
+        {"season",    jsonStr(season)},
+        {"dayLength", jsonNum(env.dayDuration or 0)},
     })
 end
 
@@ -73,12 +72,18 @@ local function collectCropPrices()
     end
 
     local economy = g_currentMission.economyManager
-    local fillTypes = g_fillTypeManager and g_fillTypeManager:getFillTypes()
+    if not g_fillTypeManager or not g_fillTypeManager.getFillTypes then
+        return jsonArr(items)
+    end
+    local fillTypes = g_fillTypeManager:getFillTypes()
     if not fillTypes then return jsonArr(items) end
 
     for _, fillType in ipairs(fillTypes) do
         if fillType.pricePerLiter and fillType.pricePerLiter > 0 then
-            local price = economy:getPricePerLiter(fillType.index, nil) or fillType.pricePerLiter
+            local price = fillType.pricePerLiter
+            if economy.getPricePerLiter then
+                price = economy:getPricePerLiter(fillType.index, nil) or price
+            end
             items[#items + 1] = jsonObj({
                 {"name",          jsonStr(fillType.name or "")},
                 {"title",         jsonStr(fillType.title or fillType.name or "")},
@@ -95,8 +100,9 @@ local function collectContracts()
     local items = {}
     local cm = g_currentMission and g_currentMission.contractManager
     if not cm then return jsonArr(items) end
+    if not cm.getContracts then return jsonArr(items) end
 
-    local contracts = cm:getContracts(false)  -- false = all farms
+    local contracts = cm:getContracts(false)
     if not contracts then return jsonArr(items) end
 
     for _, contract in ipairs(contracts) do
@@ -145,7 +151,6 @@ local function collectAnimals()
     if am.getClusters then clusters = am:getClusters() end
     if not clusters then return jsonArr(items) end
 
-    -- Group by animal type
     local byType = {}
     for _, cluster in ipairs(clusters) do
         if cluster then
@@ -160,13 +165,19 @@ local function collectAnimals()
                 byType[typeName] = {count = 0, health = 0, productivity = 0, n = 0}
             end
 
-            local count = cluster.numAnimals or cluster:getNumAnimals() or 0
-            local health = 0
-            local productivity = 0
+            local count = 0
+            if cluster.numAnimals then
+                count = cluster.numAnimals
+            elseif cluster.getNumAnimals then
+                count = cluster:getNumAnimals() or 0
+            end
 
+            local health = 0
             if cluster.getHealthFactor then
                 health = safeNum((cluster:getHealthFactor() or 0) * 100)
             end
+
+            local productivity = 0
             if cluster.getOutputFactor then
                 productivity = safeNum((cluster:getOutputFactor() or 0) * 100)
             end
@@ -182,10 +193,10 @@ local function collectAnimals()
         local avgHealth = data.n > 0 and data.health / data.n or 0
         local avgProd   = data.n > 0 and data.productivity / data.n or 0
         items[#items + 1] = jsonObj({
-            {"type",           jsonStr(typeName)},
-            {"count",          jsonNum(data.count)},
-            {"healthPct",      jsonNum(avgHealth)},
-            {"productivityPct",jsonNum(avgProd)},
+            {"type",            jsonStr(typeName)},
+            {"count",           jsonNum(data.count)},
+            {"healthPct",       jsonNum(avgHealth)},
+            {"productivityPct", jsonNum(avgProd)},
         })
     end
 
@@ -230,18 +241,21 @@ local function collectWorkers()
 end
 
 local function collectFarmInfo()
-    local farms = g_farmManager and g_farmManager:getFarms()
+    if not g_farmManager or not g_farmManager.getFarms then
+        return jsonArr({})
+    end
+    local farms = g_farmManager:getFarms()
     if not farms then return jsonArr({}) end
 
     local items = {}
     for _, farm in ipairs(farms) do
-        if farm and farm.farmId ~= 0 then  -- skip spectator farm
+        if farm and farm.farmId ~= 0 then
             items[#items + 1] = jsonObj({
-                {"farmId",   jsonNum(farm.farmId or 0)},
-                {"name",     jsonStr(farm.name or "")},
-                {"money",    jsonNum(farm.money or 0)},
-                {"loan",     jsonNum(farm.loan or 0)},
-                {"color",    jsonNum(farm.color or 0)},
+                {"farmId", jsonNum(farm.farmId or 0)},
+                {"name",   jsonStr(farm.name or "")},
+                {"money",  jsonNum(farm.money or 0)},
+                {"loan",   jsonNum(farm.loan or 0)},
+                {"color",  jsonNum(farm.color or 0)},
             })
         end
     end
@@ -252,32 +266,37 @@ end
 -- ─── Export ──────────────────────────────────────────────────────────────────
 
 local function export()
-    -- Ensure output directory exists
     createFolder(FarmSimManagerBridge.outputDir)
 
-    local gameTime   = collectGameTime()
-    local cropPrices = collectCropPrices()
-    local contracts  = collectContracts()
-    local animals    = collectAnimals()
-    local workers    = collectWorkers()
-    local farms      = collectFarmInfo()
+    local ok, err = pcall(function()
+        local gameTime   = collectGameTime()
+        local cropPrices = collectCropPrices()
+        local contracts  = collectContracts()
+        local animals    = collectAnimals()
+        local workers    = collectWorkers()
+        local farms      = collectFarmInfo()
 
-    local json = jsonObj({
-        {"exportedAt",  jsonStr(getDate("%Y-%m-%dT%H:%M:%S"))},
-        {"gameTime",    gameTime},
-        {"farms",       farms},
-        {"cropPrices",  cropPrices},
-        {"contracts",   contracts},
-        {"animals",     animals},
-        {"workers",     workers},
-    })
+        local json = jsonObj({
+            {"exportedAt",  jsonStr(getDate("%Y-%m-%dT%H:%M:%S"))},
+            {"gameTime",    gameTime},
+            {"farms",       farms},
+            {"cropPrices",  cropPrices},
+            {"contracts",   contracts},
+            {"animals",     animals},
+            {"workers",     workers},
+        })
 
-    local file = io.open(FarmSimManagerBridge.outputFile, "w")
-    if file then
-        file:write(json)
-        file:close()
-    else
-        print("FarmSimManager: failed to write " .. FarmSimManagerBridge.outputFile)
+        local file = io.open(FarmSimManagerBridge.outputFile, "w")
+        if file then
+            file:write(json)
+            file:close()
+        else
+            print("FarmSimManager: failed to write " .. FarmSimManagerBridge.outputFile)
+        end
+    end)
+
+    if not ok then
+        print("FarmSimManager: export error: " .. tostring(err))
     end
 end
 
@@ -292,7 +311,6 @@ function FarmSimManagerBridge:update(dt)
 end
 
 function FarmSimManagerBridge:onMissionLoaded(mission)
-    -- Export immediately on load, then every 30s
     self.timer = self.interval
 end
 
@@ -302,7 +320,6 @@ function FarmSimManagerBridge:onMissionStart()
     print("FarmSimManager: data bridge active, exporting to " .. self.outputFile)
 end
 
--- Register with the game engine
 local function init()
     Mission00.onMissionLoaded = Utils.appendedFunction(
         Mission00.onMissionLoaded,
