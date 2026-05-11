@@ -168,6 +168,7 @@ func (h *SyncHandler) Sync(w http.ResponseWriter, r *http.Request) {
 		payload.Company.CreationDate, now,
 	).Scan(&companyID)
 	if err != nil {
+		log.Printf("sync: company upsert error: %v", err)
 		http.Error(w, "db error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

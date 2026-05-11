@@ -73,9 +73,11 @@ func main() {
 				strings.HasSuffix(origin, ".vercel.app") ||
 				strings.HasSuffix(origin, "railway.app")
 		},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowCredentials: true,
+		AllowedHeaders:     []string{"Authorization", "Content-Type"},
+		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowCredentials:   true,
+		OptionsPassthrough: false,
+		Debug:              true,
 	})
 
 	port := os.Getenv("PORT")
@@ -91,7 +93,10 @@ func main() {
 
 func method(m string, h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != m && r.Method != http.MethodOptions {
+		if r.Method == http.MethodOptions {
+			return // let CORS middleware handle it
+		}
+		if r.Method != m {
 			http.Error(w, fmt.Sprintf("method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 			return
 		}
