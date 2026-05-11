@@ -78,8 +78,22 @@ local function collectCropPrices()
     local fillTypes = g_fillTypeManager:getFillTypes()
     if not fillTypes then return jsonArr(items) end
 
+    -- Prefixes that are not sellable commodities (animals, bales, non-market items)
+    local skipPrefixes = {"COW_", "SHEEP_", "PIG_", "HORSE_", "CHICKEN_", "ROUNDBALE", "SQUAREBALE", "BALE_"}
+    local skipNames = {MANURE=true, LIQUIDMANURE=true, DIGESTATE=true, WATER=true, DIESEL=true,
+        DEF=true, ELECTRICCHARGE=true, METHANE=true, TREESAPLINGS=true, TREE=true,
+        POPLAR=true, FORAGE=true, FORAGE_MIXING=true, CHAFF=true, STONE=true,
+        OILSEEDRADISH=true, RICESAPLINGS=true}
+
     for _, fillType in ipairs(fillTypes) do
-        if fillType.pricePerLiter and fillType.pricePerLiter > 0 then
+        local name = fillType.name or ""
+        local skip = skipNames[name]
+        if not skip then
+            for _, prefix in ipairs(skipPrefixes) do
+                if name:sub(1, #prefix) == prefix then skip = true; break end
+            end
+        end
+        if not skip and fillType.pricePerLiter and fillType.pricePerLiter > 0 then
             local price = fillType.pricePerLiter
             if economy.getPricePerLiter then
                 price = economy:getPricePerLiter(fillType.index, nil) or price

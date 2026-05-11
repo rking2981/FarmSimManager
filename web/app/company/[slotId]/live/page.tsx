@@ -119,15 +119,23 @@ export default function LivePage() {
               <p className="text-sm text-muted-foreground">No price data</p>
             ) : (
               <div className="space-y-1 max-h-72 overflow-y-auto">
-                {[...(data.cropPrices ?? [])].sort((a, b) => b.pricePerLiter - a.pricePerLiter).map((c) => {
+                {[...(data.cropPrices ?? [])]
+                  .filter((c) => !c.name.startsWith("COW_") && !c.name.startsWith("SHEEP_") &&
+                    !c.name.startsWith("PIG_") && !c.name.startsWith("BALE_") &&
+                    !c.name.startsWith("ROUNDBALE") && !c.name.startsWith("SQUAREBALE") &&
+                    !["MANURE","LIQUIDMANURE","DIGESTATE","WATER","DIESEL","DEF","ELECTRICCHARGE",
+                      "METHANE","TREESAPLINGS","TREE","POPLAR","FORAGE","FORAGE_MIXING",
+                      "CHAFF","STONE","OILSEEDRADISH","RICESAPLINGS"].includes(c.name))
+                  .sort((a, b) => b.pricePerLiter - a.pricePerLiter)
+                  .map((c) => {
                   const pct = c.basePrice > 0 ? (c.pricePerLiter / c.basePrice) * 100 : 100
                   const color = pct >= 115 ? "text-primary" : pct <= 85 ? "text-destructive" : "text-foreground"
                   return (
                     <div key={c.name} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0 text-sm">
                       <span className="capitalize">{c.title || c.name.toLowerCase()}</span>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">{fmt(c.basePrice * 1000)}/t base</span>
-                        <span className={`font-semibold tabular-nums ${color}`}>{fmt(c.pricePerLiter * 1000)}/t</span>
+                        <span className="text-xs text-muted-foreground">{fmt(c.basePrice)}/l base</span>
+                        <span className={`font-semibold tabular-nums ${color}`}>{fmt(c.pricePerLiter)}/l</span>
                       </div>
                     </div>
                   )
