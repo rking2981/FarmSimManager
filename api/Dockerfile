@@ -1,9 +1,7 @@
 FROM golang:1.22-alpine AS builder
 WORKDIR /app
-COPY go.mod ./
-RUN go mod tidy
 COPY . .
-RUN go mod download && go build -o api ./cmd/api
+RUN go mod tidy && go mod download && go build -o api ./cmd/api
 
 FROM alpine:latest
 WORKDIR /app
