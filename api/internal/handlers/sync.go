@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -139,6 +140,7 @@ func (h *SyncHandler) Sync(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+	log.Printf("sync: user_id=%s token=%s", userID, token)
 
 	var payload SyncPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -290,6 +292,7 @@ func (h *SyncHandler) Sync(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	log.Printf("sync: stored company_id=%s slot=%s user=%s", companyID, payload.Company.SlotID, userID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok", "companyId": companyID})
 }

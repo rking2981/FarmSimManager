@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -20,6 +21,7 @@ func NewCompaniesHandler(db *pgxpool.Pool) *CompaniesHandler {
 
 func (h *CompaniesHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
+	log.Printf("companies/list: user_id=%s", userID)
 	rows, err := h.db.Query(r.Context(), `
 		SELECT
 			c.id, c.slot_id, c.farm_name, c.map_title, c.difficulty, c.creation_date, c.updated_at,
