@@ -36,6 +36,10 @@ export default function CompanyFinancesPage() {
   const totalIncome = data.days.reduce((s, d) => s + d.totalIncome, 0)
   const totalExpense = data.days.reduce((s, d) => s + d.totalExpense, 0)
   const netProfit = totalIncome - totalExpense
+  const stats = data.stats ?? {
+    workedHectares: 0, sownHectares: 0, sprayedHectares: 0,
+    threshedHectares: 0, revenue: 0, expenses: 0, missionCount: 0, baleCount: 0,
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -44,7 +48,7 @@ export default function CompanyFinancesPage() {
         <h2 className="text-xl font-semibold">Financial Dashboard</h2>
         <Badge variant="secondary">{data.days.length} days recorded</Badge>
       </div>
-      <StatCards totalIncome={totalIncome} totalExpense={totalExpense} netProfit={netProfit} stats={data.stats} />
+      <StatCards totalIncome={totalIncome} totalExpense={totalExpense} netProfit={netProfit} stats={stats} />
       <Card>
         <CardHeader><CardTitle className="text-base">Income vs Expenses — By Day</CardTitle></CardHeader>
         <CardContent><FinancialChart days={data.days} /></CardContent>

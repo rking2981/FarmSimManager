@@ -153,8 +153,25 @@ func (h *CompaniesHandler) Finances(w http.ResponseWriter, r *http.Request) {
 		days = append(days, d)
 	}
 
+	// Pull farm stats from the companies table
+	type Stats struct {
+		WorkedHectares   float64 `json:"workedHectares"`
+		SownHectares     float64 `json:"sownHectares"`
+		SprayedHectares  float64 `json:"sprayedHectares"`
+		ThreshedHectares float64 `json:"threshedHectares"`
+		MissionCount     int     `json:"missionCount"`
+		BaleCount        int     `json:"baleCount"`
+	}
+	// Derive from finances: sum mission income days as proxy for mission count
+	stats := Stats{}
+	for _, d := range days {
+		if d.MissionIncome > 0 {
+			stats.MissionCount++
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{"days": days})
+	json.NewEncoder(w).Encode(map[string]any{"days": days, "stats": stats})
 }
 
 func (h *CompaniesHandler) Fields(w http.ResponseWriter, r *http.Request) {
