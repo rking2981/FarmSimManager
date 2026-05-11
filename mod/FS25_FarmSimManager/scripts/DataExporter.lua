@@ -110,6 +110,61 @@ local function collectCropPrices()
     return jsonArr(items)
 end
 
+local function collectAnimalPrices()
+    local items = {}
+    if not g_fillTypeManager or not g_fillTypeManager.getFillTypes then
+        return jsonArr(items)
+    end
+    local fillTypes = g_fillTypeManager:getFillTypes()
+    if not fillTypes then return jsonArr(items) end
+
+    -- Difficulty sell multipliers
+    local diffMultiplier = 1.8 -- default normal
+    if g_currentMission and g_currentMission.missionInfo then
+        local diff = g_currentMission.missionInfo.economicDifficulty
+        if diff == "EASY" then diffMultiplier = 3.0
+        elseif diff == "HARD" then diffMultiplier = 1.0
+        else diffMultiplier = 1.8 end
+    end
+
+    -- Age multipliers: newborn (0m), juvenile (6m), adult (18m)
+    local ageTiers = {
+        {label="Newborn",  months=0,  mult=0.04},
+        {label="Juvenile", months=6,  mult=0.105},
+        {label="Adult",    months=18, mult=0.235},
+    }
+
+    local animalPrefixes = {"COW_", "SHEEP_", "PIG_", "HORSE_", "CHICKEN_", "GOAT_"}
+
+    for _, fillType in ipairs(fillTypes) do
+        local name = fillType.name or ""
+        local isAnimal = false
+        for _, prefix in ipairs(animalPrefixes) do
+            if name:sub(1, #prefix) == prefix then isAnimal = true; break end
+        end
+        if isAnimal and fillType.pricePerLiter and fillType.pricePerLiter > 0 then
+            local basePrice = fillType.pricePerLiter
+            local tiers = {}
+            for _, tier in ipairs(ageTiers) do
+                local price = safeNum(basePrice * tier.mult * diffMultiplier)
+                tiers[#tiers + 1] = jsonObj({
+                    {"label",  jsonStr(tier.label)},
+                    {"months", jsonNum(tier.months)},
+                    {"price",  jsonNum(price)},
+                })
+            end
+            items[#items + 1] = jsonObj({
+                {"name",      jsonStr(name)},
+                {"title",     jsonStr(fillType.title or name)},
+                {"basePrice", jsonNum(basePrice)},
+                {"tiers",     jsonArr(tiers)},
+            })
+        end
+    end
+
+    return jsonArr(items)
+end
+
 local function collectContracts()
     local items = {}
     local cm = g_currentMission and g_currentMission.contractManager
@@ -300,21 +355,23 @@ local function export()
     createFolder(FarmSimManagerBridge.outputDir)
 
     local ok, err = pcall(function()
-        local gameTime   = collectGameTime()
-        local cropPrices = collectCropPrices()
-        local contracts  = collectContracts()
-        local animals    = collectAnimals()
-        local workers    = collectWorkers()
-        local farms      = collectFarmInfo()
+        local gameTime    = collectGameTime()
+        local cropPrices  = collectCropPrices()
+        local animalPrices = collectAnimalPrices()
+        local contracts   = collectContracts()
+        local animals     = collectAnimals()
+        local workers     = collectWorkers()
+        local farms       = collectFarmInfo()
 
         local json = jsonObj({
-            {"exportedAt",  jsonStr(getDate("%Y-%m-%dT%H:%M:%S"))},
-            {"gameTime",    gameTime},
-            {"farms",       farms},
-            {"cropPrices",  cropPrices},
-            {"contracts",   contracts},
-            {"animals",     animals},
-            {"workers",     workers},
+            {"exportedAt",    jsonStr(getDate("%Y-%m-%dT%H:%M:%S"))},
+            {"gameTime",      gameTime},
+            {"farms",         farms},
+            {"cropPrices",    cropPrices},
+            {"animalPrices",  animalPrices},
+            {"contracts",     contracts},
+            {"animals",       animals},
+            {"workers",       workers},
         })
 
         local file = io.open(FarmSimManagerBridge.outputFile, "w")

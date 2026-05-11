@@ -21,8 +21,8 @@ type ModData struct {
 // ParseModData reads the Lua mod's JSON output from modSettings.
 // Returns nil if the file doesn't exist (mod not installed).
 func ParseModData(saveFolder string) (*ModData, error) {
-	// modSettings lives next to the savegame folder
-	modSettingsDir := filepath.Join(filepath.Dir(saveFolder), "modSettings", "FS25_FarmSimManager")
+	// modSettings lives inside the game data folder (same level as savegame1, savegame2, etc.)
+	modSettingsDir := filepath.Join(saveFolder, "modSettings", "FS25_FarmSimManager")
 	path := filepath.Join(modSettingsDir, "data.json")
 
 	data, err := os.ReadFile(path)

@@ -20,6 +20,8 @@ const ANIMAL_ICONS: Record<string, string> = {
 }
 interface Contract { type: string; fieldId: number; reward: number; completion: number; isActive: boolean }
 interface Animal { type: string; title: string; count: number; healthPct: number; productivityPct: number; avgAgeMonths: number }
+interface AnimalPriceTier { label: string; months: number; price: number }
+interface AnimalPrice { name: string; title: string; basePrice: number; tiers: AnimalPriceTier[] }
 interface Worker { task: string; vehicle: string; wagePerHour: number }
 interface LiveData {
   available: boolean
@@ -27,6 +29,7 @@ interface LiveData {
   pushedAt?: string
   gameTime?: GameTime
   cropPrices?: CropPrice[]
+  animalPrices?: AnimalPrice[]
   contracts?: Contract[]
   animals?: Animal[]
   workers?: Worker[]
@@ -196,6 +199,37 @@ export default function LivePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Animal Market Prices */}
+        {data.animalPrices && data.animalPrices.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader><CardTitle className="text-base">🐾 Animal Dealer Prices</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {data.animalPrices.map((a) => {
+                  const prefix = ANIMAL_PREFIXES.find(p => a.name.startsWith(p)) ?? ""
+                  const icon = ANIMAL_ICONS[prefix] ?? "🐾"
+                  return (
+                    <div key={a.name} className="rounded-xl bg-secondary/40 p-3 space-y-2">
+                      <p className="font-medium text-sm flex items-center gap-1.5">
+                        <span>{icon}</span>
+                        <span>{a.title}</span>
+                      </p>
+                      <div className="space-y-1">
+                        {a.tiers.map((t) => (
+                          <div key={t.label} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{t.label} ({t.months}m)</span>
+                            <span className="font-semibold tabular-nums text-primary">{fmt(t.price)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Contracts */}
         <Card>

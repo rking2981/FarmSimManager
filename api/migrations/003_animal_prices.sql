@@ -1,0 +1,1 @@
+ALTER TABLE mod_snapshots ADD COLUMN IF NOT EXISTS animal_prices JSONB NOT NULL DEFAULT '[]';

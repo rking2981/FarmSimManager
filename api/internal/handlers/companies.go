@@ -301,24 +301,24 @@ func (h *CompaniesHandler) Live(w http.ResponseWriter, r *http.Request) {
 	}
 
 	row := h.db.QueryRow(r.Context(), `
-		SELECT exported_at::text, game_time, farms, crop_prices, contracts, animals, workers, pushed_at::text
+		SELECT exported_at::text, game_time, farms, crop_prices,
+			COALESCE(animal_prices, '[]'::jsonb), contracts, animals, workers, pushed_at::text
 		FROM mod_snapshots
 		WHERE company_id = $1
 		ORDER BY pushed_at DESC LIMIT 1`, companyID)
 
 	var exportedAt, pushedAt string
-	var gameTime, farms, cropPrices, contracts, animals, workers []byte
-	err := row.Scan(&exportedAt, &gameTime, &farms, &cropPrices, &contracts, &animals, &workers, &pushedAt)
+	var gameTime, farms, cropPrices, animalPrices, contracts, animals, workers []byte
+	err := row.Scan(&exportedAt, &gameTime, &farms, &cropPrices, &animalPrices, &contracts, &animals, &workers, &pushedAt)
 	if err != nil {
-		// No mod data yet
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"available": false})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `{"available":true,"exportedAt":%q,"pushedAt":%q,"gameTime":%s,"farms":%s,"cropPrices":%s,"contracts":%s,"animals":%s,"workers":%s}`,
-		exportedAt, pushedAt, gameTime, farms, cropPrices, contracts, animals, workers)
+	fmt.Fprintf(w, `{"available":true,"exportedAt":%q,"pushedAt":%q,"gameTime":%s,"farms":%s,"cropPrices":%s,"animalPrices":%s,"contracts":%s,"animals":%s,"workers":%s}`,
+		exportedAt, pushedAt, gameTime, farms, cropPrices, animalPrices, contracts, animals, workers)
 }
 
 func extractCompanyID(path string) string {

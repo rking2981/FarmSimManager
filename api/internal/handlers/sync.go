@@ -28,13 +28,14 @@ type SyncPayload struct {
 }
 
 type ModDataPayload struct {
-	ExportedAt string          `json:"exportedAt"`
-	GameTime   json.RawMessage `json:"gameTime"`
-	Farms      json.RawMessage `json:"farms"`
-	CropPrices json.RawMessage `json:"cropPrices"`
-	Contracts  json.RawMessage `json:"contracts"`
-	Animals    json.RawMessage `json:"animals"`
-	Workers    json.RawMessage `json:"workers"`
+	ExportedAt   string          `json:"exportedAt"`
+	GameTime     json.RawMessage `json:"gameTime"`
+	Farms        json.RawMessage `json:"farms"`
+	CropPrices   json.RawMessage `json:"cropPrices"`
+	AnimalPrices json.RawMessage `json:"animalPrices"`
+	Contracts    json.RawMessage `json:"contracts"`
+	Animals      json.RawMessage `json:"animals"`
+	Workers      json.RawMessage `json:"workers"`
 }
 
 type CompanyPayload struct {
@@ -277,12 +278,16 @@ func (h *SyncHandler) Sync(w http.ResponseWriter, r *http.Request) {
 	// Upsert mod data if present
 	if payload.ModData != nil {
 		md := payload.ModData
+		animalPrices := md.AnimalPrices
+		if len(animalPrices) == 0 {
+			animalPrices = json.RawMessage("[]")
+		}
 		_, err = h.db.Exec(ctx, `
 			INSERT INTO mod_snapshots
-				(company_id, exported_at, game_time, farms, crop_prices, contracts, animals, workers, pushed_at)
-			VALUES ($1, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9)`,
+				(company_id, exported_at, game_time, farms, crop_prices, animal_prices, contracts, animals, workers, pushed_at)
+			VALUES ($1, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9, $10)`,
 			companyID, md.ExportedAt,
-			md.GameTime, md.Farms, md.CropPrices,
+			md.GameTime, md.Farms, md.CropPrices, animalPrices,
 			md.Contracts, md.Animals, md.Workers, now,
 		)
 		if err != nil {
