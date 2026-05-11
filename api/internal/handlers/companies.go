@@ -31,7 +31,9 @@ func (h *CompaniesHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := h.db.Query(r.Context(), `
 		SELECT
-			c.id, c.slot_id, c.farm_name, c.map_title, c.difficulty, c.creation_date, c.updated_at,
+			c.id, c.slot_id, c.farm_name, c.map_title,
+			COALESCE(c.difficulty, ''), COALESCE(c.creation_date, ''),
+			c.updated_at::text,
 			COALESCE(s.money, 0), COALESCE(s.loan_amount, 0),
 			COALESCE(s.play_time_hours, 0), COALESCE(s.last_saved, '')
 		FROM companies c
@@ -71,10 +73,15 @@ func (h *CompaniesHandler) List(w http.ResponseWriter, r *http.Request) {
 			&c.CreationDate, &c.UpdatedAt, &c.Money, &c.LoanAmount,
 			&c.PlayTimeHours, &c.LastSaved,
 		); err != nil {
+			log.Printf("companies/list: scan error: %v", err)
 			continue
 		}
 		companies = append(companies, c)
 	}
+	if err := rows.Err(); err != nil {
+		log.Printf("companies/list: rows error: %v", err)
+	}
+	log.Printf("companies/list: returning %d companies", len(companies))
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(companies)
