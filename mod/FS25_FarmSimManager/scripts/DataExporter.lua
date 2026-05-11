@@ -141,7 +141,8 @@ local function collectAnimals()
     local am = g_currentMission and g_currentMission.animalManager
     if not am then return jsonArr(items) end
 
-    local clusters = am:getClusters and am:getClusters()
+    local clusters = nil
+    if am.getClusters then clusters = am:getClusters() end
     if not clusters then return jsonArr(items) end
 
     -- Group by animal type
