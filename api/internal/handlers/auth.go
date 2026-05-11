@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/farmsimcompanymanager/api/internal/auth"
+	"github.com/farmsimcompanymanager/api/internal/middleware"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -120,7 +121,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("userID").(string)
+	userID := middleware.GetUserID(r)
 	var email string
 	h.db.QueryRow(r.Context(), `SELECT email FROM users WHERE id = $1`, userID).Scan(&email)
 
