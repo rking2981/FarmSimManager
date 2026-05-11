@@ -69,9 +69,7 @@ func main() {
 
 	c := cors.New(cors.Options{
 		AllowOriginFunc: func(origin string) bool {
-			return origin == "http://localhost:3000" ||
-				strings.HasSuffix(origin, ".vercel.app") ||
-				strings.HasSuffix(origin, "railway.app")
+			return true // allow all origins — API is auth-protected via JWT/token
 		},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
