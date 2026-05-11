@@ -26,18 +26,20 @@ func NewPusher(apiURL, companionToken string) *Pusher {
 }
 
 type SyncPayload struct {
-	Company  parser.Company          `json:"company"`
-	Finances []parser.DailyFinances  `json:"finances"`
-	Fields   []parser.Field          `json:"fields"`
-	Vehicles []parser.Vehicle        `json:"vehicles"`
+	Company  parser.Company         `json:"company"`
+	Finances []parser.DailyFinances `json:"finances"`
+	Fields   []parser.Field         `json:"fields"`
+	Vehicles []parser.Vehicle       `json:"vehicles"`
+	ModData  *parser.ModData        `json:"modData,omitempty"`
 }
 
-func (p *Pusher) Push(company parser.Company, finances []parser.DailyFinances, fields []parser.Field, vehicles []parser.Vehicle) error {
+func (p *Pusher) Push(company parser.Company, finances []parser.DailyFinances, fields []parser.Field, vehicles []parser.Vehicle, modData *parser.ModData) error {
 	payload := SyncPayload{
 		Company:  company,
 		Finances: finances,
 		Fields:   fields,
 		Vehicles: vehicles,
+		ModData:  modData,
 	}
 
 	body, err := json.Marshal(payload)

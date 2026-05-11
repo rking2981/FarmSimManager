@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -264,6 +265,41 @@ func (h *CompaniesHandler) Vehicles(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(vehicles)
+}
+
+func (h *CompaniesHandler) Live(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r)
+	companyID := extractCompanyID(r.URL.Path)
+
+	var exists bool
+	h.db.QueryRow(r.Context(),
+		`SELECT EXISTS(SELECT 1 FROM companies WHERE id = $1 AND user_id = $2)`,
+		companyID, userID,
+	).Scan(&exists)
+	if !exists {
+		http.NotFound(w, r)
+		return
+	}
+
+	row := h.db.QueryRow(r.Context(), `
+		SELECT exported_at, game_time, farms, crop_prices, contracts, animals, workers, pushed_at
+		FROM mod_snapshots
+		WHERE company_id = $1
+		ORDER BY pushed_at DESC LIMIT 1`, companyID)
+
+	var exportedAt, pushedAt string
+	var gameTime, farms, cropPrices, contracts, animals, workers []byte
+	err := row.Scan(&exportedAt, &gameTime, &farms, &cropPrices, &contracts, &animals, &workers, &pushedAt)
+	if err != nil {
+		// No mod data yet
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"available": false})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, `{"available":true,"exportedAt":%q,"pushedAt":%q,"gameTime":%s,"farms":%s,"cropPrices":%s,"contracts":%s,"animals":%s,"workers":%s}`,
+		exportedAt, pushedAt, gameTime, farms, cropPrices, contracts, animals, workers)
 }
 
 func extractCompanyID(path string) string {

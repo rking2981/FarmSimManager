@@ -24,10 +24,19 @@ func Connect(ctx context.Context) (*pgxpool.Pool, error) {
 }
 
 func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
-	sql, err := os.ReadFile("migrations/001_initial.sql")
-	if err != nil {
-		return err
+	migrations := []string{
+		"migrations/001_initial.sql",
+		"migrations/002_mod_data.sql",
 	}
-	_, err = pool.Exec(ctx, string(sql))
-	return err
+	for _, path := range migrations {
+		sql, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read %s: %w", path, err)
+		}
+		if _, err := pool.Exec(ctx, string(sql)); err != nil {
+			// Log but continue — tables may already exist on redeploy
+			fmt.Printf("migration %s: %v\n", path, err)
+		}
+	}
+	return nil
 }

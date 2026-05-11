@@ -84,6 +84,15 @@ func (w *Watcher) reload() {
 		return
 	}
 
+	// Read mod data once (shared across all slots — it covers all farms)
+	modData, merr := parser.ParseModData(w.cfg.SaveFolder)
+	if merr != nil {
+		log.Printf("cloud: mod data parse error: %v", merr)
+	}
+	if modData != nil {
+		log.Printf("cloud: mod data available (exported %s)", modData.ExportedAt)
+	}
+
 	// Push each company to the cloud
 	for _, company := range companies {
 		finances, _, ferr := parser.ParseFinances(w.cfg.SaveFolder, company.SlotID)
@@ -101,7 +110,7 @@ func (w *Watcher) reload() {
 			log.Printf("cloud: vehicles parse error slot %s: %v", company.SlotID, ferr)
 			continue
 		}
-		if err := w.pusher.Push(company, finances, fields, vehicles); err != nil {
+		if err := w.pusher.Push(company, finances, fields, vehicles, modData); err != nil {
 			log.Printf("cloud: push error slot %s: %v", company.SlotID, err)
 		}
 	}

@@ -23,6 +23,17 @@ type SyncPayload struct {
 	Finances []FinancePayload `json:"finances"`
 	Fields   []FieldPayload   `json:"fields"`
 	Vehicles []VehiclePayload `json:"vehicles"`
+	ModData  *ModDataPayload  `json:"modData,omitempty"`
+}
+
+type ModDataPayload struct {
+	ExportedAt string          `json:"exportedAt"`
+	GameTime   json.RawMessage `json:"gameTime"`
+	Farms      json.RawMessage `json:"farms"`
+	CropPrices json.RawMessage `json:"cropPrices"`
+	Contracts  json.RawMessage `json:"contracts"`
+	Animals    json.RawMessage `json:"animals"`
+	Workers    json.RawMessage `json:"workers"`
 }
 
 type CompanyPayload struct {
@@ -257,6 +268,24 @@ func (h *SyncHandler) Sync(w http.ResponseWriter, r *http.Request) {
 		)
 		if err != nil {
 			http.Error(w, "db error (vehicles): "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Upsert mod data if present
+	if payload.ModData != nil {
+		md := payload.ModData
+		_, err = h.db.Exec(ctx, `
+			INSERT INTO mod_snapshots
+				(company_id, exported_at, game_time, farms, crop_prices, contracts, animals, workers, pushed_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+			companyID, md.ExportedAt,
+			md.GameTime, md.Farms, md.CropPrices,
+			md.Contracts, md.Animals, md.Workers, now,
+		)
+		if err != nil {
+			// Non-fatal — log and continue
+			http.Error(w, "db error (mod_data): "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
