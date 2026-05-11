@@ -21,14 +21,6 @@ func NewCompaniesHandler(db *pgxpool.Pool) *CompaniesHandler {
 
 func (h *CompaniesHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
-	log.Printf("companies/list: user_id=%s", userID)
-
-	// Debug: count all companies in DB and for this user
-	var total, mine int
-	h.db.QueryRow(r.Context(), `SELECT COUNT(*) FROM companies`).Scan(&total)
-	h.db.QueryRow(r.Context(), `SELECT COUNT(*) FROM companies WHERE user_id = $1`, userID).Scan(&mine)
-	log.Printf("companies/list: total=%d mine=%d", total, mine)
-
 	rows, err := h.db.Query(r.Context(), `
 		SELECT
 			c.id, c.slot_id, c.farm_name, c.map_title,
@@ -73,15 +65,10 @@ func (h *CompaniesHandler) List(w http.ResponseWriter, r *http.Request) {
 			&c.CreationDate, &c.UpdatedAt, &c.Money, &c.LoanAmount,
 			&c.PlayTimeHours, &c.LastSaved,
 		); err != nil {
-			log.Printf("companies/list: scan error: %v", err)
 			continue
 		}
 		companies = append(companies, c)
 	}
-	if err := rows.Err(); err != nil {
-		log.Printf("companies/list: rows error: %v", err)
-	}
-	log.Printf("companies/list: returning %d companies", len(companies))
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(companies)

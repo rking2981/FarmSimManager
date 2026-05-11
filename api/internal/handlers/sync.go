@@ -140,7 +140,6 @@ func (h *SyncHandler) Sync(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	log.Printf("sync: user_id=%s token=%s", userID, token)
 
 	var payload SyncPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {

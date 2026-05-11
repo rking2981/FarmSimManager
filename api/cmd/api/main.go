@@ -73,11 +73,9 @@ func main() {
 				strings.HasSuffix(origin, ".vercel.app") ||
 				strings.HasSuffix(origin, "railway.app")
 		},
-		AllowedHeaders:     []string{"Authorization", "Content-Type"},
-		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowCredentials:   true,
-		OptionsPassthrough: false,
-		Debug:              true,
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
 	})
 
 	port := os.Getenv("PORT")
