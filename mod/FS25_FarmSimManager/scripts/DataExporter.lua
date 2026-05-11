@@ -209,7 +209,7 @@ local function collectWorkers()
             end
 
             local vehicleName = ""
-            if helper.vehicle and helper.vehicle:getName then
+            if helper.vehicle and helper.vehicle.getName then
                 vehicleName = helper.vehicle:getName() or ""
             end
 
