@@ -78,8 +78,8 @@ local function collectCropPrices()
     local fillTypes = g_fillTypeManager:getFillTypes()
     if not fillTypes then return jsonArr(items) end
 
-    -- Prefixes that are not sellable commodities (animals, bales, non-market items)
-    local skipPrefixes = {"COW_", "SHEEP_", "PIG_", "HORSE_", "CHICKEN_", "ROUNDBALE", "SQUAREBALE", "BALE_"}
+    -- Skip non-market items (bales, waste, utilities)
+    local skipPrefixes = {"ROUNDBALE", "SQUAREBALE", "BALE_"}
     local skipNames = {MANURE=true, LIQUIDMANURE=true, DIGESTATE=true, WATER=true, DIESEL=true,
         DEF=true, ELECTRICCHARGE=true, METHANE=true, TREESAPLINGS=true, TREE=true,
         POPLAR=true, FORAGE=true, FORAGE_MIXING=true, CHAFF=true, STONE=true,

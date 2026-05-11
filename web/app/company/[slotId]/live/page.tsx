@@ -14,6 +14,10 @@ interface GameTime {
   hour: number; minute: number; season: string
 }
 interface CropPrice { name: string; title: string; pricePerLiter: number; basePrice: number }
+const ANIMAL_PREFIXES = ["COW_", "SHEEP_", "PIG_", "HORSE_", "CHICKEN_", "GOAT_"]
+const ANIMAL_ICONS: Record<string, string> = {
+  COW_: "🐄", SHEEP_: "🐑", PIG_: "🐖", HORSE_: "🐴", CHICKEN_: "🐔", GOAT_: "🐐",
+}
 interface Contract { type: string; fieldId: number; reward: number; completion: number; isActive: boolean }
 interface Animal { type: string; count: number; healthPct: number; productivityPct: number }
 interface Worker { task: string; vehicle: string; wagePerHour: number }
@@ -120,8 +124,8 @@ export default function LivePage() {
             ) : (
               <div className="space-y-1 max-h-72 overflow-y-auto">
                 {[...(data.cropPrices ?? [])]
-                  .filter((c) => !c.name.startsWith("COW_") && !c.name.startsWith("SHEEP_") &&
-                    !c.name.startsWith("PIG_") && !c.name.startsWith("BALE_") &&
+                  .filter((c) => !ANIMAL_PREFIXES.some(p => c.name.startsWith(p)) &&
+                    !c.name.startsWith("BALE_") &&
                     !c.name.startsWith("ROUNDBALE") && !c.name.startsWith("SQUAREBALE") &&
                     !["MANURE","LIQUIDMANURE","DIGESTATE","WATER","DIESEL","DEF","ELECTRICCHARGE",
                       "METHANE","TREESAPLINGS","TREE","POPLAR","FORAGE","FORAGE_MIXING",
@@ -148,29 +152,67 @@ export default function LivePage() {
         {/* Animals */}
         <Card>
           <CardHeader><CardTitle className="text-base">🐄 Animals</CardTitle></CardHeader>
-          <CardContent>
-            {!data.animals?.length ? (
-              <p className="text-sm text-muted-foreground">No animals</p>
-            ) : (
+          <CardContent className="space-y-4">
+            {/* Owned animals with status */}
+            {data.animals && data.animals.length > 0 ? (
               <div className="space-y-3">
-                {(data.animals ?? []).map((a) => (
-                  <div key={a.type} className="space-y-1.5">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium capitalize">{a.type.toLowerCase()}</span>
-                      <span className="text-muted-foreground">{a.count} animals</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-[10px] text-muted-foreground mb-1">Health</p>
-                        <Bar value={a.healthPct} color={a.healthPct >= 70 ? "bg-primary" : a.healthPct >= 40 ? "bg-amber-500" : "bg-destructive"} />
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Your Animals</p>
+                {data.animals.map((a) => {
+                  const prefix = ANIMAL_PREFIXES.find(p => a.type.startsWith(p)) ?? ""
+                  const icon = ANIMAL_ICONS[prefix] ?? "🐾"
+                  return (
+                    <div key={a.type} className="rounded-xl bg-secondary/40 p-3 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium flex items-center gap-1.5">
+                          <span>{icon}</span>
+                          <span className="capitalize">{a.type.toLowerCase().replace(/_/g, " ")}</span>
+                        </span>
+                        <span className="text-muted-foreground tabular-nums">{a.count} animals</span>
                       </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground mb-1">Productivity</p>
-                        <Bar value={a.productivityPct} color="bg-primary" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground mb-1">Health</p>
+                          <Bar value={a.healthPct} color={a.healthPct >= 70 ? "bg-primary" : a.healthPct >= 40 ? "bg-amber-500" : "bg-destructive"} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground mb-1">Productivity</p>
+                          <Bar value={a.productivityPct} color={a.productivityPct >= 70 ? "bg-primary" : a.productivityPct >= 40 ? "bg-amber-500" : "bg-destructive"} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No animals owned</p>
+            )}
+
+            {/* Animal market prices */}
+            {data.cropPrices && data.cropPrices.filter(c => ANIMAL_PREFIXES.some(p => c.name.startsWith(p))).length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Purchase Prices</p>
+                {(() => {
+                  // Group by species prefix, show one representative price per species
+                  const seen = new Set<string>()
+                  return data.cropPrices!
+                    .filter(c => ANIMAL_PREFIXES.some(p => c.name.startsWith(p)))
+                    .map(c => {
+                      const prefix = ANIMAL_PREFIXES.find(p => c.name.startsWith(p)) ?? ""
+                      const icon = ANIMAL_ICONS[prefix] ?? "🐾"
+                      return (
+                        <div key={c.name} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0 text-sm">
+                          <span className="flex items-center gap-1.5">
+                            <span>{icon}</span>
+                            <span>{c.title}</span>
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground">{fmt(c.basePrice)} base</span>
+                            <span className="font-semibold tabular-nums text-primary">{fmt(c.pricePerLiter)}</span>
+                          </div>
+                        </div>
+                      )
+                    })
+                })()}
               </div>
             )}
           </CardContent>
