@@ -19,6 +19,9 @@ api/.env
 # Config with secrets
 AppData/
 
+# Logs
+*.log
+
 # OS
 .DS_Store
 Thumbs.db

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<modDesc descVersion="92">
+    <author>FarmSim Manager</author>
+    <version>1.0.0.0</version>
+    <title>
+        <en>FarmSim Manager Bridge</en>
+    </title>
+    <description>
+        <en>Data bridge for the FarmSim Manager web app. Exports live game data (crop prices, contracts, animals, workers) to a local JSON file every 30 seconds for the companion app to sync to the cloud.</en>
+    </description>
+    <iconFilename>icon.dds</iconFilename>
+    <multiplayer supported="true"/>
+    <extraSourceFiles>
+        <sourceFile filename="scripts/DataExporter.lua"/>
+    </extraSourceFiles>
+</modDesc>
