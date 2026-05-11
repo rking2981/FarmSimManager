@@ -1,0 +1,33 @@
+package db
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+func Connect(ctx context.Context) (*pgxpool.Pool, error) {
+	url := os.Getenv("DATABASE_URL")
+	if url == "" {
+		return nil, fmt.Errorf("DATABASE_URL not set")
+	}
+	pool, err := pgxpool.New(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	if err := pool.Ping(ctx); err != nil {
+		return nil, err
+	}
+	return pool, nil
+}
+
+func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
+	sql, err := os.ReadFile("migrations/001_initial.sql")
+	if err != nil {
+		return err
+	}
+	_, err = pool.Exec(ctx, string(sql))
+	return err
+}

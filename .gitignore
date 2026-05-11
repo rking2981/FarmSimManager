@@ -1,0 +1,27 @@
+# Node
+node_modules/
+.next/
+web/.next/
+web/node_modules/
+
+# Go binaries
+companion/companion.exe
+api/api
+companion/*.exe
+api/*.exe
+
+# Environment files
+.env
+.env.local
+web/.env.local
+api/.env
+
+# Config with secrets
+AppData/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go build cache
+*.test

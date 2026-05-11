@@ -1,0 +1,102 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+
+import { fetchFinances } from "@/lib/companion"
+import type { FinancesResponse } from "@/types/finances"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import FinancialChart from "@/components/finances/FinancialChart"
+import IncomeBreakdown from "@/components/finances/IncomeBreakdown"
+import ExpenseBreakdown from "@/components/finances/ExpenseBreakdown"
+import StatCards from "@/components/finances/StatCards"
+import CompanyNav from "@/components/CompanyNav"
+
+export default function CompanyFinancesPage() {
+  const { slotId } = useParams<{ slotId: string }>()
+  const router = useRouter()
+  const [data, setData] = useState<FinancesResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = localStorage.getItem("companion_token") ?? ""
+    if (!token) {
+      router.push("/")
+      return
+    }
+    fetchFinances(token, slotId)
+      .then(setData)
+      .catch((e) => setError(String(e)))
+      .finally(() => setLoading(false))
+  }, [slotId, router])
+
+  if (loading) return <LoadingState />
+  if (error) return <p className="text-destructive">{error}</p>
+  if (!data) return null
+
+  const totalIncome = data.days.reduce((s, d) => s + d.totalIncome, 0)
+  const totalExpense = data.days.reduce((s, d) => s + d.totalExpense, 0)
+  const netProfit = totalIncome - totalExpense
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      <CompanyNav slotId={slotId} />
+      <div className="flex items-center gap-3">
+        <h2 className="text-xl font-semibold">Financial Dashboard</h2>
+        <Badge variant="secondary">{data.days.length} days recorded</Badge>
+      </div>
+
+      <StatCards
+        totalIncome={totalIncome}
+        totalExpense={totalExpense}
+        netProfit={netProfit}
+        stats={data.stats}
+      />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Income vs Expenses — By Day</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FinancialChart days={data.days} />
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Income Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <IncomeBreakdown days={data.days} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Expense Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExpenseBreakdown days={data.days} />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function LoadingState() {
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="h-8 w-48 bg-secondary rounded animate-pulse" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-24 bg-secondary rounded-lg animate-pulse" />
+        ))}
+      </div>
+      <div className="h-72 bg-secondary rounded-lg animate-pulse" />
+    </div>
+  )
+}
