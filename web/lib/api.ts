@@ -56,6 +56,12 @@ export async function getVehicles(token: string, companyId: string) {
   return res.json()
 }
 
+export async function getAnimals(token: string, companyId: string) {
+  const res = await fetch(`${API_URL}/api/companies/${companyId}/animals`, { headers: authHeaders(token) })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
 export async function getLiveData(token: string, companyId: string) {
   const res = await fetch(`${API_URL}/api/companies/${companyId}/live`, { headers: authHeaders(token) })
   if (!res.ok) throw new Error(await res.text())

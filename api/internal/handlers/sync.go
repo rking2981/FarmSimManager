@@ -24,6 +24,7 @@ type SyncPayload struct {
 	Finances []FinancePayload `json:"finances"`
 	Fields   []FieldPayload   `json:"fields"`
 	Vehicles []VehiclePayload `json:"vehicles"`
+	Animals  []AnimalPayload  `json:"animals"`
 	ModData  *ModDataPayload  `json:"modData,omitempty"`
 }
 
@@ -120,6 +121,18 @@ type VehiclePayload struct {
 	OperatingTimeHours float64 `json:"operatingTimeHours"`
 	Damage             float64 `json:"damage"`
 	Condition          string  `json:"condition"`
+}
+
+type AnimalPayload struct {
+	SubType         string  `json:"subType"`
+	Name            string  `json:"name"`
+	Category        string  `json:"category"`
+	NumAnimals      int     `json:"numAnimals"`
+	AgeMonths       int     `json:"ageMonths"`
+	HealthPct       float64 `json:"healthPct"`
+	ReproductionPct float64 `json:"reproductionPct"`
+	BasePrice       float64 `json:"basePrice"`
+	EstimatedValue  float64 `json:"estimatedValue"`
 }
 
 // Sync handles POST /sync from the companion app.
@@ -271,6 +284,26 @@ func (h *SyncHandler) Sync(w http.ResponseWriter, r *http.Request) {
 		)
 		if err != nil {
 			http.Error(w, "db error (vehicles): "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Upsert animals
+	for _, a := range payload.Animals {
+		_, err = h.db.Exec(ctx, `
+			INSERT INTO animals
+				(company_id, sub_type, name, category, num_animals, age_months,
+				 health_pct, reproduction_pct, base_price, estimated_value, pushed_at)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+			ON CONFLICT (company_id, sub_type) DO UPDATE SET
+				name=$3, category=$4, num_animals=$5, age_months=$6,
+				health_pct=$7, reproduction_pct=$8, base_price=$9,
+				estimated_value=$10, pushed_at=$11`,
+			companyID, a.SubType, a.Name, a.Category, a.NumAnimals, a.AgeMonths,
+			a.HealthPct, a.ReproductionPct, a.BasePrice, a.EstimatedValue, now,
+		)
+		if err != nil {
+			http.Error(w, "db error (animals): "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}

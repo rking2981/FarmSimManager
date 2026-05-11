@@ -28,6 +28,7 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 		"migrations/001_initial.sql",
 		"migrations/002_mod_data.sql",
 		"migrations/003_animal_prices.sql",
+		"migrations/004_animals.sql",
 	}
 	for _, path := range migrations {
 		sql, err := os.ReadFile(path)

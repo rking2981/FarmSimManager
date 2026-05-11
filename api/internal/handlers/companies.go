@@ -286,6 +286,56 @@ func (h *CompaniesHandler) Vehicles(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(vehicles)
 }
 
+func (h *CompaniesHandler) Animals(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r)
+	companyID := extractCompanyID(r.URL.Path)
+
+	var exists bool
+	h.db.QueryRow(r.Context(),
+		`SELECT EXISTS(SELECT 1 FROM companies WHERE id = $1 AND user_id = $2)`,
+		companyID, userID,
+	).Scan(&exists)
+	if !exists {
+		http.NotFound(w, r)
+		return
+	}
+
+	rows, err := h.db.Query(r.Context(), `
+		SELECT sub_type, name, category, num_animals, age_months,
+			health_pct, reproduction_pct, base_price, estimated_value
+		FROM animals WHERE company_id = $1 ORDER BY category, name`, companyID)
+	if err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type Animal struct {
+		SubType         string  `json:"subType"`
+		Name            string  `json:"name"`
+		Category        string  `json:"category"`
+		NumAnimals      int     `json:"numAnimals"`
+		AgeMonths       int     `json:"ageMonths"`
+		HealthPct       float64 `json:"healthPct"`
+		ReproductionPct float64 `json:"reproductionPct"`
+		BasePrice       float64 `json:"basePrice"`
+		EstimatedValue  float64 `json:"estimatedValue"`
+	}
+
+	animals := []Animal{}
+	for rows.Next() {
+		var a Animal
+		if err := rows.Scan(&a.SubType, &a.Name, &a.Category, &a.NumAnimals, &a.AgeMonths,
+			&a.HealthPct, &a.ReproductionPct, &a.BasePrice, &a.EstimatedValue); err != nil {
+			continue
+		}
+		animals = append(animals, a)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(animals)
+}
+
 func (h *CompaniesHandler) Live(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
 	companyID := extractCompanyID(r.URL.Path)

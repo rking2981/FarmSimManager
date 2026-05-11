@@ -110,7 +110,12 @@ func (w *Watcher) reload() {
 			log.Printf("cloud: vehicles parse error slot %s: %v", company.SlotID, ferr)
 			continue
 		}
-		if err := w.pusher.Push(company, finances, fields, vehicles, modData); err != nil {
+		animals, ferr := parser.ParseAnimals(w.cfg.SaveFolder, company.SlotID)
+		if ferr != nil {
+			log.Printf("cloud: animals parse error slot %s: %v", company.SlotID, ferr)
+			animals = []parser.Animal{}
+		}
+		if err := w.pusher.Push(company, finances, fields, vehicles, animals, modData); err != nil {
 			log.Printf("cloud: push error slot %s: %v", company.SlotID, err)
 		}
 	}

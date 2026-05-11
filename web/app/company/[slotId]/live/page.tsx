@@ -152,51 +152,11 @@ export default function LivePage() {
           </CardContent>
         </Card>
 
-        {/* Animals */}
+        {/* Animals — full detail on Animals tab */}
         <Card>
           <CardHeader><CardTitle className="text-base">🐄 Animals</CardTitle></CardHeader>
           <CardContent>
-            {!data.animals?.length ? (
-              <p className="text-sm text-muted-foreground">No animals owned</p>
-            ) : (
-              <div className="space-y-3">
-                {data.animals.map((a) => {
-                  const prefix = ANIMAL_PREFIXES.find(p => a.type.startsWith(p)) ?? ""
-                  const icon = ANIMAL_ICONS[prefix] ?? "🐾"
-                  const displayName = a.title && a.title !== "Unknown" ? a.title : a.type.toLowerCase().replace(/_/g, " ")
-                  const ageYears = Math.floor(a.avgAgeMonths / 12)
-                  const ageMonthsRem = Math.round(a.avgAgeMonths % 12)
-                  const ageStr = ageYears > 0
-                    ? `${ageYears}y ${ageMonthsRem}m avg`
-                    : `${Math.round(a.avgAgeMonths)}m avg`
-                  return (
-                    <div key={a.type} className="rounded-xl bg-secondary/40 p-3 space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium flex items-center gap-1.5">
-                          <span>{icon}</span>
-                          <span className="capitalize">{displayName}</span>
-                        </span>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{ageStr}</span>
-                          <span>·</span>
-                          <span>{a.count} animals</span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-[10px] text-muted-foreground mb-1">Health</p>
-                          <Bar value={a.healthPct} color={a.healthPct >= 70 ? "bg-primary" : a.healthPct >= 40 ? "bg-amber-500" : "bg-destructive"} />
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-muted-foreground mb-1">Productivity</p>
-                          <Bar value={a.productivityPct} color={a.productivityPct >= 70 ? "bg-primary" : a.productivityPct >= 40 ? "bg-amber-500" : "bg-destructive"} />
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground">See the <strong>Animals</strong> tab for full animal details, health, and productivity.</p>
           </CardContent>
         </Card>
 

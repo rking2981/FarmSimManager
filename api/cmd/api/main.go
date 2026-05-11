@@ -56,6 +56,8 @@ func main() {
 			companies.Vehicles(w, r)
 		case strings.HasSuffix(path, "/live"):
 			companies.Live(w, r)
+		case strings.HasSuffix(path, "/animals"):
+			companies.Animals(w, r)
 		default:
 			http.NotFound(w, r)
 		}

@@ -12,6 +12,7 @@ const tabs = [
   { label: "Finances", icon: "💰", href: (id: string) => `/company/${id}` },
   { label: "Fields", icon: "🌾", href: (id: string) => `/company/${id}/fields` },
   { label: "Equipment", icon: "🚜", href: (id: string) => `/company/${id}/vehicles` },
+  { label: "Animals", icon: "🐄", href: (id: string) => `/company/${id}/animals` },
   { label: "Live", icon: "📡", href: (id: string) => `/company/${id}/live` },
 ]
 

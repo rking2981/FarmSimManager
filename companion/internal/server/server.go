@@ -79,6 +79,9 @@ func (s *Server) handleCompanyRoute(w http.ResponseWriter, r *http.Request) {
 		case "vehicles":
 			s.handleVehicles(w, r, parts[0])
 			return
+		case "animals":
+			s.handleAnimals(w, r, parts[0])
+			return
 		}
 	}
 	http.NotFound(w, r)
@@ -96,6 +99,19 @@ func (s *Server) handleCompanies(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(companies)
+}
+
+func (s *Server) handleAnimals(w http.ResponseWriter, r *http.Request, slotID string) {
+	animals, err := parser.ParseAnimals(s.cfg.SaveFolder, slotID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to parse animals: %v", err), http.StatusInternalServerError)
+		return
+	}
+	if animals == nil {
+		animals = []parser.Animal{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(animals)
 }
 
 func (s *Server) handleVehicles(w http.ResponseWriter, r *http.Request, slotID string) {
