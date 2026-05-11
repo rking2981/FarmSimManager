@@ -169,14 +169,17 @@ local function collectAnimals()
     for _, cluster in ipairs(clusters) do
         if cluster then
             local typeName = "UNKNOWN"
-            if cluster.animalType and cluster.animalType.name then
-                typeName = cluster.animalType.name
-            elseif cluster.getAnimalTypeName then
-                typeName = cluster:getAnimalTypeName() or "UNKNOWN"
+            local typeTitle = "Unknown"
+            if cluster.animalType then
+                if cluster.animalType.name then typeName = cluster.animalType.name end
+                if cluster.animalType.title then typeTitle = cluster.animalType.title end
+            end
+            if cluster.getAnimalTypeName then
+                typeName = cluster:getAnimalTypeName() or typeName
             end
 
             if not byType[typeName] then
-                byType[typeName] = {count = 0, health = 0, productivity = 0, n = 0}
+                byType[typeName] = {title = typeTitle, count = 0, health = 0, productivity = 0, ageMonths = 0, n = 0}
             end
 
             local count = 0
@@ -196,21 +199,35 @@ local function collectAnimals()
                 productivity = safeNum((cluster:getOutputFactor() or 0) * 100)
             end
 
+            local ageMonths = 0
+            if cluster.age then
+                ageMonths = safeNum(cluster.age)
+            elseif cluster.getAge then
+                ageMonths = safeNum(cluster:getAge() or 0)
+            end
+
             byType[typeName].count = byType[typeName].count + count
             byType[typeName].health = byType[typeName].health + health
             byType[typeName].productivity = byType[typeName].productivity + productivity
+            byType[typeName].ageMonths = byType[typeName].ageMonths + ageMonths
             byType[typeName].n = byType[typeName].n + 1
+            if byType[typeName].title == "Unknown" and typeTitle ~= "Unknown" then
+                byType[typeName].title = typeTitle
+            end
         end
     end
 
     for typeName, data in pairs(byType) do
         local avgHealth = data.n > 0 and data.health / data.n or 0
         local avgProd   = data.n > 0 and data.productivity / data.n or 0
+        local avgAge    = data.n > 0 and data.ageMonths / data.n or 0
         items[#items + 1] = jsonObj({
             {"type",            jsonStr(typeName)},
+            {"title",           jsonStr(data.title)},
             {"count",           jsonNum(data.count)},
             {"healthPct",       jsonNum(avgHealth)},
             {"productivityPct", jsonNum(avgProd)},
+            {"avgAgeMonths",    jsonNum(avgAge)},
         })
     end
 
