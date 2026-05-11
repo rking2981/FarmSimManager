@@ -15,7 +15,7 @@ export default function Home() {
 
   useEffect(() => {
     if (loading) return
-    if (!token) { router.push("/login"); return }
+    if (!token) { window.location.href = "/login"; return }
 
     setFetching(true)
     getCompanies(token)

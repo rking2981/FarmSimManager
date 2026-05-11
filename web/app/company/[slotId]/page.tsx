@@ -22,7 +22,7 @@ export default function CompanyFinancesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) { router.push("/login"); return }
+    if (!token) { window.location.href = "/login"; return }
     getFinances(token, slotId)
       .then(setData)
       .catch((e) => setError(String(e)))

@@ -22,7 +22,7 @@ export default function VehiclesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) { router.push("/login"); return }
+    if (!token) { window.location.href = "/login"; return }
     getVehicles(token, slotId)
       .then(setVehicles)
       .catch((e) => setError(String(e)))

@@ -22,7 +22,7 @@ export default function FieldsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) { router.push("/login"); return }
+    if (!token) { window.location.href = "/login"; return }
     getFields(token, slotId)
       .then(setFields)
       .catch((e) => setError(String(e)))

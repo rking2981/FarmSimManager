@@ -52,7 +52,7 @@ export default function LivePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) { router.push("/login"); return }
+    if (!token) { window.location.href = "/login"; return }
     getLiveData(token!, slotId)
       .then(setData)
       .catch((e) => setError(String(e)))
