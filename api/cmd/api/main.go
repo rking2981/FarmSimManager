@@ -26,7 +26,7 @@ func main() {
 	defer pool.Close()
 
 	if err := db.Migrate(ctx, pool); err != nil {
-		log.Printf("migration warning: %v", err)
+		log.Printf("migration warning (non-fatal): %v", err)
 	}
 
 	auth := handlers.NewAuthHandler(pool)
@@ -63,7 +63,8 @@ func main() {
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
 	})
 
 	c := cors.New(cors.Options{
