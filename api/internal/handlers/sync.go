@@ -280,15 +280,14 @@ func (h *SyncHandler) Sync(w http.ResponseWriter, r *http.Request) {
 		_, err = h.db.Exec(ctx, `
 			INSERT INTO mod_snapshots
 				(company_id, exported_at, game_time, farms, crop_prices, contracts, animals, workers, pushed_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+			VALUES ($1, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9)`,
 			companyID, md.ExportedAt,
 			md.GameTime, md.Farms, md.CropPrices,
 			md.Contracts, md.Animals, md.Workers, now,
 		)
 		if err != nil {
-			// Non-fatal — log and continue
-			http.Error(w, "db error (mod_data): "+err.Error(), http.StatusInternalServerError)
-			return
+			log.Printf("sync: mod_data insert error: %v", err)
+			// non-fatal, continue
 		}
 	}
 
