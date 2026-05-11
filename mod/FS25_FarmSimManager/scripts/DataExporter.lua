@@ -197,7 +197,8 @@ local function collectWorkers()
     local hm = g_currentMission and g_currentMission.helperManager
     if not hm then return jsonArr(items) end
 
-    local helpers = hm:getHelpers and hm:getHelpers()
+    local helpers = nil
+    if hm.getHelpers then helpers = hm:getHelpers() end
     if not helpers then return jsonArr(items) end
 
     for _, helper in ipairs(helpers) do
