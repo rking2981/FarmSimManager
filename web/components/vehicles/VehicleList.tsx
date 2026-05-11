@@ -1,10 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import Image from "next/image"
 import type { Vehicle } from "@/types/vehicles"
-
-const COMPANION_URL = "http://127.0.0.1:3847"
 
 function fmt(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
@@ -25,29 +21,21 @@ const CONDITION: Record<string, { bar: string; badge: string; label: string }> =
   poor: { bar: "bg-destructive", badge: "bg-destructive/15 text-destructive", label: "Poor" },
 }
 
-function VehicleImage({ path, token, name }: { path: string; token: string; name: string }) {
-  const [failed, setFailed] = useState(false)
-  const src = `${COMPANION_URL}/api/image?path=${encodeURIComponent(path)}`
-
-  if (failed || !path) {
-    return (
-      <div className="w-full h-full flex items-center justify-center text-4xl bg-secondary/50 rounded-xl">
-        🚜
-      </div>
-    )
-  }
-
+function DamageBar({ damage, condition }: { damage: number; condition: Vehicle["condition"] }) {
+  const { bar } = CONDITION[condition]
   return (
-    <img
-      src={`${src}&token=${token}`}
-      alt={name}
-      className="w-full h-full object-contain p-2 rounded-xl"
-      onError={() => setFailed(true)}
-    />
+    <div className="flex items-center gap-2 min-w-[90px]">
+      <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+        <div className={`h-full rounded-full ${bar} transition-all`} style={{ width: `${damage * 100}%` }} />
+      </div>
+      <span className="text-[11px] text-muted-foreground tabular-nums w-8 text-right">
+        {(damage * 100).toFixed(0)}%
+      </span>
+    </div>
   )
 }
 
-export default function VehicleList({ vehicles, token }: { vehicles: Vehicle[]; token: string }) {
+export default function VehicleList({ vehicles }: { vehicles: Vehicle[] }) {
   if (vehicles.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
@@ -67,14 +55,12 @@ export default function VehicleList({ vehicles, token }: { vehicles: Vehicle[]; 
             key={v.uniqueId}
             className="group rounded-2xl bg-card border border-border/60 card-shadow overflow-hidden hover:card-shadow-hover hover:-translate-y-0.5 transition-all duration-200"
           >
-            {/* Image area */}
-            <div className="relative h-36 bg-secondary/30 border-b border-border/40">
-              <VehicleImage path={v.storeImagePath} token={token} name={v.name} />
-              {/* Condition badge top-right */}
+            {/* Image area — emoji only, no localhost dependency */}
+            <div className="relative h-36 bg-secondary/30 border-b border-border/40 flex items-center justify-center">
+              <span className="text-5xl">{icon}</span>
               <span className={`absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${cond.badge}`}>
                 {cond.label}
               </span>
-              {/* Mod badge top-left */}
               {v.isMod && (
                 <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/30 text-accent-foreground">
                   MOD
@@ -86,12 +72,8 @@ export default function VehicleList({ vehicles, token }: { vehicles: Vehicle[]; 
             <div className="p-3 space-y-2">
               <div>
                 <p className="font-semibold text-xs leading-tight line-clamp-2">{v.name}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {icon} {v.category}
-                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{v.category}</p>
               </div>
-
-              {/* Damage bar */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[10px] text-muted-foreground">
                   <span>Damage</span>
@@ -104,8 +86,6 @@ export default function VehicleList({ vehicles, token }: { vehicles: Vehicle[]; 
                   />
                 </div>
               </div>
-
-              {/* Stats row */}
               <div className="flex justify-between text-[10px] pt-1 border-t border-border/50">
                 <span className="text-muted-foreground tabular-nums">{v.operatingTimeHours.toFixed(0)}h</span>
                 <span className="font-semibold tabular-nums">{fmt(v.price)}</span>

@@ -14,7 +14,7 @@ const ALL_CATEGORIES = "All"
 export default function VehiclesPage() {
   const { slotId } = useParams<{ slotId: string }>()
   const router = useRouter()
-  const { token, companionToken } = useAuth()
+  const { token } = useAuth()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [category, setCategory] = useState<string>(ALL_CATEGORIES)
   const [sortBy, setSortBy] = useState<"name" | "damage" | "price" | "hours">("damage")
@@ -82,7 +82,7 @@ export default function VehiclesPage() {
           </button>
         ))}
       </div>
-      <VehicleList vehicles={filtered} token={companionToken ?? ""} />
+      <VehicleList vehicles={filtered} />
     </div>
   )
 }
